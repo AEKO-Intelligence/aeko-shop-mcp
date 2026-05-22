@@ -7,11 +7,13 @@ One npm package, two MCP server profiles that connect your AI assistant to AEKO 
 
 AEKO Shop has no human signup. The only humans-touch surfaces are `aeko.shop/install`, `aeko.shop/connect-brand`, and the OAuth consent screen. Everything else flows through this MCP.
 
+The MCP speaks **stdio** transport only. Works with any MCP client that spawns local processes: Claude Desktop, Claude Code, Codex CLI, Gemini CLI, Cursor, Cline, Windsurf. (ChatGPT custom GPTs are HTTP-only and not yet supported.)
+
 ---
 
-## Install
+## Install (personal profile)
 
-You pick one of three places to run the MCP server. The recommended path is Claude Desktop.
+You pick one place to run the MCP server. The first-run flow is the same regardless — see [First-run authorization](#first-run-authorization) below.
 
 ### Claude Desktop
 
@@ -28,11 +30,23 @@ Edit `claude_desktop_config.json` (Settings → Developer → Edit Config) and r
 }
 ```
 
-For the brand profile, see [Brand setup](#brand-setup) below — it needs an extra one-time token.
+### Claude Code
+
+```sh
+claude mcp add --transport stdio aeko-shop-personal -- npx -y aeko-shop-mcp personal
+```
+
+All flags (`--transport`, `--env`, `--scope`) must come before the server name; the `--` separates the name from the command.
 
 ### Codex CLI
 
-Add to your Codex MCP config:
+Interactive:
+
+```sh
+codex mcp add aeko-shop-personal -- npx -y aeko-shop-mcp personal
+```
+
+Or by editing `~/.codex/config.toml` directly:
 
 ```toml
 [mcp_servers.aeko-shop-personal]
@@ -40,13 +54,22 @@ command = "npx"
 args = ["-y", "aeko-shop-mcp", "personal"]
 ```
 
-### ChatGPT custom GPT
+### Gemini CLI
 
-Create a custom GPT with a Custom MCP action and set the command to:
+Edit `~/.gemini/settings.json` (global) or `.gemini/settings.json` (per project — only honored when the project folder is trusted):
 
-```sh
-npx -y aeko-shop-mcp personal
+```json
+{
+  "mcpServers": {
+    "aeko-shop-personal": {
+      "command": "npx",
+      "args": ["-y", "aeko-shop-mcp", "personal"]
+    }
+  }
+}
 ```
+
+If tools don't show up after editing, run `/mcp reload` inside Gemini CLI.
 
 ---
 
@@ -76,6 +99,12 @@ https://aeko.shop/oauth/authorize?client_id=...&state=...&code_challenge=...
    }
    ```
 
+   For Claude Code: `claude mcp add --transport stdio --env AEKO_SHOP_AUTH_CODE=<code> aeko-shop-personal -- npx -y aeko-shop-mcp personal` (delete the prior entry first with `claude mcp remove`).
+
+   For Codex CLI: pass it via the interactive add or set `[mcp_servers.aeko-shop-personal.env] AEKO_SHOP_AUTH_CODE = "<code>"` in `~/.codex/config.toml`.
+
+   For Gemini CLI: add an `env` block to the same `mcpServers` entry in `~/.gemini/settings.json`.
+
 5. **Ask your agent to do something AEKO-related.** The MCP exchanges the code for a real access + refresh token, caches both in `~/.aeko-shop-mcp/tokens.json` (mode 0600), and clears the bootstrap. You can remove `AEKO_SHOP_AUTH_CODE` from the config now — the cached tokens will refresh automatically.
 
 > **v0.1 limitation.** The manual code-paste step exists because the MCP does not yet run a local HTTP callback listener. A future release will catch the `code=` in process and eliminate this step.
@@ -89,22 +118,37 @@ If you ever see `Authorize AEKO Shop first` again, your tokens were revoked (eit
 The brand agent only works against a brand whose website AEKO has verified. The verification flow lives at [`aeko.shop/connect-brand`](https://aeko.shop/connect-brand):
 
 1. Walk through the verification wizard — enter your brand URL, paste the snippet on your homepage, wait for verification.
-2. When verification succeeds, click **Generate install token**. AEKO shows you a single-use, 5-minute brand connection token plus a ready-to-paste Claude Desktop config:
+2. When verification succeeds, click **Generate install token**. AEKO shows a single-use, 5-minute brand connection token plus ready-to-paste configs for each supported client.
 
-   ```json
-   {
-     "mcpServers": {
-       "aeko-shop-brand": {
-         "command": "npx",
-         "args": ["-y", "aeko-shop-mcp", "brand"],
-         "env": { "BRAND_CONNECTION_TOKEN": "<one-time token>" }
-       }
-     }
-   }
-   ```
+Brand config in each client (replace `<token>` with the one-time value from `/connect-brand`):
 
-3. Paste into your AI client config and restart it. The first tool call walks the OAuth dance just like the personal flow above. The consent screen says **Acting as brand: \<your brand\>** and only the brand scopes (Featured, Hot Deals, Orders) are offered.
-4. After exchange, the `BRAND_CONNECTION_TOKEN` is consumed and no longer useful — you can remove it from the config or leave it (it's been invalidated server-side).
+**Claude Desktop / Gemini CLI** (JSON, same shape):
+
+```json
+{
+  "mcpServers": {
+    "aeko-shop-brand": {
+      "command": "npx",
+      "args": ["-y", "aeko-shop-mcp", "brand"],
+      "env": { "BRAND_CONNECTION_TOKEN": "<token>" }
+    }
+  }
+}
+```
+
+**Claude Code:**
+
+```sh
+claude mcp add --transport stdio --env BRAND_CONNECTION_TOKEN=<token> aeko-shop-brand -- npx -y aeko-shop-mcp brand
+```
+
+**Codex CLI:**
+
+```sh
+codex mcp add aeko-shop-brand --env BRAND_CONNECTION_TOKEN=<token> -- npx -y aeko-shop-mcp brand
+```
+
+After your AI client restarts and you trigger any brand tool, the consent screen at `aeko.shop/oauth/authorize` says **Acting as brand: \<your brand\>** and only brand scopes (Featured, Hot Deals, Orders) are offered. After exchange, the `BRAND_CONNECTION_TOKEN` is consumed server-side and no longer useful — you can remove it from the config or leave it.
 
 > The brand connection token is consumed once and expires in 5 minutes. If your first install fails for any reason, walk back through `aeko.shop/connect-brand` and generate a new one.
 
@@ -210,10 +254,10 @@ AEKO_SHOP_API_BASE=http://localhost:8000 \
   node dist/cli.js personal   # boots stdio MCP server
 ```
 
-The package is private until the first npm publish. Until then, install locally by pointing the MCP config directly at the built CLI:
+Until the first npm publish, install locally by pointing the MCP config directly at the built CLI:
 
 ```jsonc
-// claude_desktop_config.json
+// claude_desktop_config.json (or Gemini settings.json)
 {
   "mcpServers": {
     "aeko-shop-personal": {
@@ -225,6 +269,10 @@ The package is private until the first npm publish. Until then, install locally 
 ```
 
 Or use `npm link` from the consumer's working directory and reference the `aeko-shop-mcp` bin from `PATH`.
+
+### Release
+
+Push a semver tag (`v0.2.0`, etc.) to `main`. The `npm-publish` workflow builds, typechecks, validates that `package.json#version` matches the tag, and publishes to npm with provenance.
 
 ---
 
@@ -241,3 +289,9 @@ The MCP and the AEKO Shop backend share a versioned scope/schema contract expose
 ```
 
 If a future MCP release expects a newer `schema_version` than the live backend, it will warn on startup and refuse to run.
+
+---
+
+## License
+
+MIT — see [LICENSE](./LICENSE).

@@ -1,14 +1,45 @@
 {
   "name": "aeko-shop-mcp",
   "version": "0.1.0",
-  "private": true,
+  "description": "AEKO Shop MCP — connect your AI assistant to AEKO Shop as a personal shopper or a verified brand agent.",
   "type": "module",
+  "license": "MIT",
+  "author": "AEKO Intelligence",
+  "homepage": "https://aeko.shop/install",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AEKO-Intelligence/aeko-shop-mcp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/AEKO-Intelligence/aeko-shop-mcp/issues"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "aeko",
+    "aeko-shop",
+    "ecommerce",
+    "claude",
+    "codex",
+    "gemini",
+    "shopping-agent",
+    "brand-agent"
+  ],
   "bin": {
     "aeko-shop-mcp": "./dist/cli.js"
   },
+  "files": [
+    "dist/",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "prepublishOnly": "npm run build"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",
