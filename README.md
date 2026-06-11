@@ -2,8 +2,8 @@
 
 One npm package, two MCP server profiles that connect your AI assistant to AEKO Shop:
 
-- **`aeko-shop-mcp personal`** — your AI assistant becomes a personal shopper that can browse brands, save preferences, and draft orders on your behalf.
-- **`aeko-shop-mcp brand`** — your AI assistant acts as a verified brand agent that can update Featured Products, Hot Deals, and the order queue for a brand you own.
+- **`aeko-shop-mcp personal`** — your AI assistant becomes a personal shopper that can browse brands, products, and reviews (no OAuth needed for browsing) and draft orders on your behalf.
+- **`aeko-shop-mcp brand`** — your AI assistant acts as a verified brand agent that can manage the profile and order queue for a brand you own.
 
 AEKO Shop has no human signup. The only humans-touch surfaces are `aeko.shop/install`, `aeko.shop/connect-brand`, and the OAuth consent screen. Everything else flows through this MCP.
 
@@ -148,7 +148,7 @@ claude mcp add --transport stdio --env BRAND_CONNECTION_TOKEN=<token> aeko-shop-
 codex mcp add aeko-shop-brand --env BRAND_CONNECTION_TOKEN=<token> -- npx -y aeko-shop-mcp brand
 ```
 
-After your AI client restarts and you trigger any brand tool, the consent screen at `aeko.shop/oauth/authorize` says **Acting as brand: \<your brand\>** and only brand scopes (Featured, Hot Deals, Orders) are offered. After exchange, the `BRAND_CONNECTION_TOKEN` is consumed server-side and no longer useful — you can remove it from the config or leave it.
+After your AI client restarts and you trigger any brand tool, the consent screen at `aeko.shop/oauth/authorize` says **Acting as brand: \<your brand\>** and only brand scopes (Profile, Orders) are offered. After exchange, the `BRAND_CONNECTION_TOKEN` is consumed server-side and no longer useful — you can remove it from the config or leave it.
 
 > The brand connection token is consumed once and expires in 5 minutes. If your first install fails for any reason, walk back through `aeko.shop/connect-brand` and generate a new one.
 

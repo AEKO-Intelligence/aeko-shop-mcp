@@ -23,7 +23,11 @@ server.tool(
     about_md: z.string().optional(),
     logo_url: z.string().url().max(2048).optional(),
     hero_image_url: z.string().url().max(2048).optional(),
-    vertical: z.string().optional(),
+    // Keep in sync with BrandVertical in aeko-shop-backend/app/schemas.py —
+    // a free string here would let agents emit valid-looking calls that 422.
+    vertical: z
+      .enum(["skincare", "food", "home", "health", "baby", "pets", "fashion", "electronics", "services", "other"])
+      .optional(),
   },
   async (input) => {
     const fields = Object.fromEntries(Object.entries(input).filter(([, value]) => value !== undefined));
