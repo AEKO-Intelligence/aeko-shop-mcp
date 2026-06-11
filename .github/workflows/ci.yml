@@ -21,4 +21,8 @@ jobs:
 
       - run: npm run build
 
-      - run: node dist/cli.js 2>&1 | grep -q "Usage: aeko-shop-mcp personal|brand"
+      # Block scalar: the "Usage: ..." colon+space breaks YAML plain-scalar
+      # parsing when inlined (this one line made the whole workflow invalid
+      # since v0.1 — every run failed at 0s with "workflow file issue").
+      - run: |
+          node dist/cli.js 2>&1 | grep -q "Usage: aeko-shop-mcp personal|brand"
