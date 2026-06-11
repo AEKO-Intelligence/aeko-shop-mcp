@@ -1,6 +1,7 @@
 {
   "name": "aeko-shop-mcp",
   "version": "0.1.0",
+  "mcpName": "io.github.aeko-intelligence/aeko-shop-mcp",
   "description": "AEKO Shop MCP — connect your AI assistant to AEKO Shop as a personal shopper or a verified brand agent.",
   "type": "module",
   "license": "MIT",
