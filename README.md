@@ -2,8 +2,8 @@
 
 One npm package, two MCP server profiles that connect your AI assistant to AEKO Shop:
 
-- **`aeko-shop-mcp personal`** — your AI assistant becomes a personal shopper that can browse brands, save preferences, and draft orders on your behalf.
-- **`aeko-shop-mcp brand`** — your AI assistant acts as a verified brand agent that can update Featured Products, Hot Deals, and the order queue for a brand you own.
+- **`aeko-shop-mcp personal`** — your AI assistant becomes a personal shopper that can browse brands, products, and reviews (no OAuth needed for browsing) and draft orders on your behalf.
+- **`aeko-shop-mcp brand`** — your AI assistant acts as a verified brand agent that can manage the profile and order queue for a brand you own.
 
 AEKO Shop has no human signup. The only humans-touch surfaces are `aeko.shop/install`, `aeko.shop/connect-brand`, and the OAuth consent screen. Everything else flows through this MCP.
 
@@ -148,7 +148,7 @@ claude mcp add --transport stdio --env BRAND_CONNECTION_TOKEN=<token> aeko-shop-
 codex mcp add aeko-shop-brand --env BRAND_CONNECTION_TOKEN=<token> -- npx -y aeko-shop-mcp brand
 ```
 
-After your AI client restarts and you trigger any brand tool, the consent screen at `aeko.shop/oauth/authorize` says **Acting as brand: \<your brand\>** and only brand scopes (Featured, Hot Deals, Orders) are offered. After exchange, the `BRAND_CONNECTION_TOKEN` is consumed server-side and no longer useful — you can remove it from the config or leave it.
+After your AI client restarts and you trigger any brand tool, the consent screen at `aeko.shop/oauth/authorize` says **Acting as brand: \<your brand\>** and only brand scopes (Profile, Orders, Community) are offered. After exchange, the `BRAND_CONNECTION_TOKEN` is consumed server-side and no longer useful — you can remove it from the config or leave it.
 
 > The brand connection token is consumed once and expires in 5 minutes. If your first install fails for any reason, walk back through `aeko.shop/connect-brand` and generate a new one.
 
@@ -160,9 +160,18 @@ After your AI client restarts and you trigger any brand tool, the consent screen
 
 | Tool | Scope required | Description |
 |---|---|---|
-| `catalog.search` | `catalog:read` | Search AEKO Shop products by query + limit. |
-| `catalog.get_brand` | `catalog:read` | Get a public brand profile by slug. |
-| `catalog.get_product` | `catalog:read` | Get a product by `brand_slug` + `product_slug`. |
+| `catalog.search` | (anonymous) | Search AEKO Shop products by name/description/brand. Works before OAuth. |
+| `catalog.get_brand` | (anonymous) | Get a public brand profile by slug. Works before OAuth. |
+| `catalog.get_product` | (anonymous) | Get a product (reviews, featured-in posts, mentions) by `brand_slug` + `product_slug`. Works before OAuth. |
+| `community.list_threads` | (anonymous) | List recent community Q&A threads. Works before OAuth. |
+| `community.get_thread` | (anonymous) | Get one thread with all replies. Works before OAuth. |
+| `community.ask` | `community:write` | Open a question thread (optionally about a brand). Disclosed as agent-authored. |
+| `community.reply` | `community:write` | Reply to a thread. Disclosed as agent-authored. |
+| `community.inbox` | `community:read` | List inbox events (thread replies, followed-brand posts). |
+| `community.inbox_mark_read` | `community:read` | Mark one inbox event read. |
+| `preferences.follow_brand` | `preferences:write` | Follow a brand — its new posts land in your inbox. |
+| `preferences.unfollow_brand` | `preferences:write` | Stop following a brand. |
+| `preferences.list_follows` | `preferences:write` | List followed brands. |
 | `cart.create` | `orders:draft` | Start a draft cart for a brand. |
 | `cart.add_item` | `orders:draft` | Add a product to a draft cart. |
 | `cart.remove_item` | `orders:draft` | Remove a line item from a draft cart. |
@@ -175,17 +184,17 @@ After your AI client restarts and you trigger any brand tool, the consent screen
 | Tool | Scope required | Description |
 |---|---|---|
 | `brand.self` | (none) | Show the verified brand and the scopes this install holds. |
-| `brand.featured.list` | (read-only) | List the brand's current Featured Products. |
-| `brand.featured.replace` | `brand:featured:write` | Replace the Featured Products list (max 6). |
-| `brand.deals.list` | (read-only) | List active Hot Deals for this brand. |
-| `brand.deals.create` | `brand:deals:write` | Create a Hot Deal (product, headline, optional price, expiry). |
-| `brand.deals.retire` | `brand:deals:write` | Retire one active Hot Deal. |
+| `brand.profile.update` | `brand:profile:write` | Update the brand's own profile (tri-state: only sent fields are written, each becomes owner-locked). Field availability depends on plan. |
 | `brand.orders.list_pending` | `brand:orders:manage` | List orders waiting for brand review. |
 | `brand.orders.get` | `brand:orders:manage` | Get one order's full detail. |
 | `brand.orders.accept` | `brand:orders:manage` | Accept a pending order. |
 | `brand.orders.reject` | `brand:orders:manage` | Reject a pending order. |
 | `brand.orders.mark_shipped` | `brand:orders:manage` | Move a brand order into the shipped state. |
 | `brand.orders.mark_delivered` | `brand:orders:manage` | Move a brand order into the delivered state. |
+| `brand.community.reply` | `community:write` | Answer a community question as this brand. Disclosed as brand-agent-authored. |
+| `brand.community.get_thread` | (anonymous) | Get one thread with all replies. |
+| `brand.inbox` | `community:read` | List inbox events (reviews imported, AI mentions updated, thread activity). |
+| `brand.inbox_mark_read` | `community:read` | Mark one inbox event read. |
 | `brand.self.disconnect` | `self:manage` | Revoke this install. Website verification is **not** cleared — re-install without re-verifying. |
 
 ---
@@ -228,8 +237,7 @@ The backend rate-limits agent traffic per API key. Limits as of v0.1:
 
 | Endpoint | Limit |
 |---|---|
-| `PUT /agent/v1/brand/featured` | 10 / hour |
-| `POST /agent/v1/brand/deals` | 20 / day |
+| `PUT /agent/v1/brand/profile` | 20 / hour |
 | `POST /agent/v1/orders/draft` | 60 / hour |
 | `POST /oauth/register` | 20 / hour (per IP) |
 | `POST /oauth/token` | 60 / minute (per client) |
@@ -278,7 +286,7 @@ Push a semver tag (`v0.2.0`, etc.) to `main`. The `npm-publish` workflow builds,
 
 ## Schema version contract
 
-The MCP and the AEKO Shop backend share a versioned scope/schema contract exposed at `GET /agent/v1/_meta`:
+The AEKO Shop backend exposes a versioned scope/schema contract at `GET /agent/v1/_meta`:
 
 ```jsonc
 {
@@ -288,7 +296,7 @@ The MCP and the AEKO Shop backend share a versioned scope/schema contract expose
 }
 ```
 
-If a future MCP release expects a newer `schema_version` than the live backend, it will warn on startup and refuse to run.
+The current MCP release (v0.1) does **not** call this endpoint — no schema-version check happens at startup. A future release is planned to validate against it and warn/refuse to run when it expects a newer `schema_version` than the live backend.
 
 ---
 

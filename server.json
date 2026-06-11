@@ -1,0 +1,59 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.aeko-intelligence/aeko-shop-mcp",
+  "title": "AEKO Shop",
+  "description": "Agentic storefront for aeko.shop — browse Korean long-tail brands, products, and contextual reviews (no auth needed), draft orders as a personal shopper, or manage profile and orders as a verified brand agent.",
+  "repository": {
+    "url": "https://github.com/AEKO-Intelligence/aeko-shop-mcp",
+    "source": "github"
+  },
+  "websiteUrl": "https://aeko.shop/install",
+  "version": "0.1.0",
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "aeko-shop-mcp",
+      "version": "0.1.0",
+      "transport": {
+        "type": "stdio"
+      },
+      "packageArguments": [
+        {
+          "type": "positional",
+          "valueHint": "profile",
+          "description": "Server profile: 'personal' (shopper — anonymous catalog browsing, OAuth for carts/orders) or 'brand' (verified brand agent — profile + order management).",
+          "choices": ["personal", "brand"],
+          "default": "personal"
+        }
+      ],
+      "environmentVariables": [
+        {
+          "name": "AEKO_SHOP_AUTH_CODE",
+          "description": "One-time OAuth bootstrap code from the aeko.shop install flow. Safe to remove after the first successful exchange.",
+          "isRequired": false,
+          "isSecret": true,
+          "format": "string"
+        },
+        {
+          "name": "BRAND_CONNECTION_TOKEN",
+          "description": "One-time, 5-minute token from aeko.shop/connect-brand that binds a brand install to a verified brand. Only needed on first brand install.",
+          "isRequired": false,
+          "isSecret": true,
+          "format": "string"
+        },
+        {
+          "name": "AEKO_SHOP_API_BASE",
+          "description": "Override the API origin (default https://api.aeko.shop). Only for staging.",
+          "isRequired": false,
+          "format": "string"
+        },
+        {
+          "name": "AEKO_SHOP_FRONTEND_BASE",
+          "description": "Override the consent-screen origin (default https://aeko.shop). Must match the API base deployment.",
+          "isRequired": false,
+          "format": "string"
+        }
+      ]
+    }
+  ]
+}
