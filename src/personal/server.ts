@@ -9,26 +9,28 @@ const server = new McpServer({ name: "AEKO Personal Shopper", version: "0.1.0" }
 
 server.tool(
   "catalog.search",
-  "Search AEKO Shop products.",
+  "Search AEKO Shop products by name, description, or brand name. Anonymous — works before OAuth.",
   { query: z.string().optional(), limit: z.number().int().min(1).max(100).default(20) },
   async ({ query, limit }) =>
-    asTextResult(() => api.request(`/api/products?${new URLSearchParams({ q: query ?? "", limit: String(limit) })}`)),
+    asTextResult(() =>
+      api.requestPublic(`/api/products?${new URLSearchParams({ q: query ?? "", limit: String(limit) })}`),
+    ),
 );
 
 server.tool(
   "catalog.get_brand",
-  "Get a public AEKO Shop brand profile.",
+  "Get a public AEKO Shop brand profile. Anonymous — works before OAuth.",
   { slug: z.string().min(1) },
-  async ({ slug }) => asTextResult(() => api.request(`/api/brands/${encodeURIComponent(slug)}`)),
+  async ({ slug }) => asTextResult(() => api.requestPublic(`/api/brands/${encodeURIComponent(slug)}`)),
 );
 
 server.tool(
   "catalog.get_product",
-  "Get a public AEKO Shop product detail by brand slug and product slug.",
+  "Get a public AEKO Shop product detail (reviews, featured-in posts, community mentions) by brand slug and product slug. Anonymous — works before OAuth.",
   { brand_slug: z.string().min(1), product_slug: z.string().min(1) },
   async ({ brand_slug, product_slug }) =>
     asTextResult(() =>
-      api.request(`/api/brands/${encodeURIComponent(brand_slug)}/products/${encodeURIComponent(product_slug)}`),
+      api.requestPublic(`/api/brands/${encodeURIComponent(brand_slug)}/products/${encodeURIComponent(product_slug)}`),
     ),
 );
 
