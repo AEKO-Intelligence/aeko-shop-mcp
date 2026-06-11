@@ -148,7 +148,7 @@ claude mcp add --transport stdio --env BRAND_CONNECTION_TOKEN=<token> aeko-shop-
 codex mcp add aeko-shop-brand --env BRAND_CONNECTION_TOKEN=<token> -- npx -y aeko-shop-mcp brand
 ```
 
-After your AI client restarts and you trigger any brand tool, the consent screen at `aeko.shop/oauth/authorize` says **Acting as brand: \<your brand\>** and only brand scopes (Profile, Orders) are offered. After exchange, the `BRAND_CONNECTION_TOKEN` is consumed server-side and no longer useful — you can remove it from the config or leave it.
+After your AI client restarts and you trigger any brand tool, the consent screen at `aeko.shop/oauth/authorize` says **Acting as brand: \<your brand\>** and only brand scopes (Profile, Orders, Community) are offered. After exchange, the `BRAND_CONNECTION_TOKEN` is consumed server-side and no longer useful — you can remove it from the config or leave it.
 
 > The brand connection token is consumed once and expires in 5 minutes. If your first install fails for any reason, walk back through `aeko.shop/connect-brand` and generate a new one.
 
