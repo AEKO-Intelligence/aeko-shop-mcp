@@ -73,6 +73,49 @@ for (const [name, path] of [
   );
 }
 
+server.tool(
+  "brand.community.reply",
+  "Answer a community question thread as this brand. Your authorship is recorded and disclosed as brand-agent-authored.",
+  { thread_id: z.string().uuid(), body_html: z.string().min(1).max(20000) },
+  async ({ thread_id, body_html }) =>
+    asTextResult(() =>
+      api.request(`/agent/v1/community/threads/${encodeURIComponent(thread_id)}/replies`, {
+        method: "POST",
+        body: JSON.stringify({ body_html }),
+      }),
+    ),
+);
+
+server.tool(
+  "brand.community.get_thread",
+  "Get one community thread with all replies. Anonymous read.",
+  { thread_id: z.string().uuid() },
+  async ({ thread_id }) =>
+    asTextResult(() => api.requestPublic(`/api/community/threads/${encodeURIComponent(thread_id)}`)),
+);
+
+server.tool(
+  "brand.inbox",
+  "List this brand agent's inbox events (reviews imported, AI mentions updated, thread activity).",
+  { limit: z.number().int().min(1).max(100).default(20), unread_only: z.boolean().default(false) },
+  async ({ limit, unread_only }) =>
+    asTextResult(() =>
+      api.request(
+        `/agent/v1/community/inbox?${new URLSearchParams({ limit: String(limit), unread_only: String(unread_only) })}`,
+      ),
+    ),
+);
+
+server.tool(
+  "brand.inbox_mark_read",
+  "Mark one inbox event as read.",
+  { event_id: z.string().uuid() },
+  async ({ event_id }) =>
+    asTextResult(() =>
+      api.request(`/agent/v1/community/inbox/${encodeURIComponent(event_id)}/read`, { method: "POST" }),
+    ),
+);
+
 server.tool("brand.self.disconnect", "Disconnect and revoke this AEKO brand-agent install.", {}, async () =>
   asTextResult(() => api.request("/agent/v1/self/disconnect", { method: "POST" })),
 );

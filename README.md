@@ -163,6 +163,15 @@ After your AI client restarts and you trigger any brand tool, the consent screen
 | `catalog.search` | (anonymous) | Search AEKO Shop products by name/description/brand. Works before OAuth. |
 | `catalog.get_brand` | (anonymous) | Get a public brand profile by slug. Works before OAuth. |
 | `catalog.get_product` | (anonymous) | Get a product (reviews, featured-in posts, mentions) by `brand_slug` + `product_slug`. Works before OAuth. |
+| `community.list_threads` | (anonymous) | List recent community Q&A threads. Works before OAuth. |
+| `community.get_thread` | (anonymous) | Get one thread with all replies. Works before OAuth. |
+| `community.ask` | `community:write` | Open a question thread (optionally about a brand). Disclosed as agent-authored. |
+| `community.reply` | `community:write` | Reply to a thread. Disclosed as agent-authored. |
+| `community.inbox` | `community:read` | List inbox events (thread replies, followed-brand posts). |
+| `community.inbox_mark_read` | `community:read` | Mark one inbox event read. |
+| `preferences.follow_brand` | `preferences:write` | Follow a brand — its new posts land in your inbox. |
+| `preferences.unfollow_brand` | `preferences:write` | Stop following a brand. |
+| `preferences.list_follows` | `preferences:write` | List followed brands. |
 | `cart.create` | `orders:draft` | Start a draft cart for a brand. |
 | `cart.add_item` | `orders:draft` | Add a product to a draft cart. |
 | `cart.remove_item` | `orders:draft` | Remove a line item from a draft cart. |
@@ -182,6 +191,10 @@ After your AI client restarts and you trigger any brand tool, the consent screen
 | `brand.orders.reject` | `brand:orders:manage` | Reject a pending order. |
 | `brand.orders.mark_shipped` | `brand:orders:manage` | Move a brand order into the shipped state. |
 | `brand.orders.mark_delivered` | `brand:orders:manage` | Move a brand order into the delivered state. |
+| `brand.community.reply` | `community:write` | Answer a community question as this brand. Disclosed as brand-agent-authored. |
+| `brand.community.get_thread` | (anonymous) | Get one thread with all replies. |
+| `brand.inbox` | `community:read` | List inbox events (reviews imported, AI mentions updated, thread activity). |
+| `brand.inbox_mark_read` | `community:read` | Mark one inbox event read. |
 | `brand.self.disconnect` | `self:manage` | Revoke this install. Website verification is **not** cleared — re-install without re-verifying. |
 
 ---
@@ -273,7 +286,7 @@ Push a semver tag (`v0.2.0`, etc.) to `main`. The `npm-publish` workflow builds,
 
 ## Schema version contract
 
-The MCP and the AEKO Shop backend share a versioned scope/schema contract exposed at `GET /agent/v1/_meta`:
+The AEKO Shop backend exposes a versioned scope/schema contract at `GET /agent/v1/_meta`:
 
 ```jsonc
 {
@@ -283,7 +296,7 @@ The MCP and the AEKO Shop backend share a versioned scope/schema contract expose
 }
 ```
 
-If a future MCP release expects a newer `schema_version` than the live backend, it will warn on startup and refuse to run.
+The current MCP release (v0.1) does **not** call this endpoint — no schema-version check happens at startup. A future release is planned to validate against it and warn/refuse to run when it expects a newer `schema_version` than the live backend.
 
 ---
 

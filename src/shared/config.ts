@@ -9,6 +9,8 @@ export const FRONTEND_BASE = process.env.AEKO_SHOP_FRONTEND_BASE ?? "https://aek
 export const PERSONAL_SCOPES = [
   "catalog:read",
   "community:read",
+  "community:write",
+  "preferences:write",
   "orders:draft",
   "self:manage",
 ];
@@ -16,6 +18,8 @@ export const PERSONAL_SCOPES = [
 export const BRAND_SCOPES = [
   "brand:profile:write",
   "brand:orders:manage",
+  "community:read",
+  "community:write",
   "self:manage",
 ];
 
