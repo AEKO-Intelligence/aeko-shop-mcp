@@ -160,9 +160,9 @@ After your AI client restarts and you trigger any brand tool, the consent screen
 
 | Tool | Scope required | Description |
 |---|---|---|
-| `catalog.search` | `catalog:read` | Search AEKO Shop products by query + limit. |
-| `catalog.get_brand` | `catalog:read` | Get a public brand profile by slug. |
-| `catalog.get_product` | `catalog:read` | Get a product by `brand_slug` + `product_slug`. |
+| `catalog.search` | (anonymous) | Search AEKO Shop products by name/description/brand. Works before OAuth. |
+| `catalog.get_brand` | (anonymous) | Get a public brand profile by slug. Works before OAuth. |
+| `catalog.get_product` | (anonymous) | Get a product (reviews, featured-in posts, mentions) by `brand_slug` + `product_slug`. Works before OAuth. |
 | `cart.create` | `orders:draft` | Start a draft cart for a brand. |
 | `cart.add_item` | `orders:draft` | Add a product to a draft cart. |
 | `cart.remove_item` | `orders:draft` | Remove a line item from a draft cart. |
@@ -175,11 +175,7 @@ After your AI client restarts and you trigger any brand tool, the consent screen
 | Tool | Scope required | Description |
 |---|---|---|
 | `brand.self` | (none) | Show the verified brand and the scopes this install holds. |
-| `brand.featured.list` | (read-only) | List the brand's current Featured Products. |
-| `brand.featured.replace` | `brand:featured:write` | Replace the Featured Products list (max 6). |
-| `brand.deals.list` | (read-only) | List active Hot Deals for this brand. |
-| `brand.deals.create` | `brand:deals:write` | Create a Hot Deal (product, headline, optional price, expiry). |
-| `brand.deals.retire` | `brand:deals:write` | Retire one active Hot Deal. |
+| `brand.profile.update` | `brand:profile:write` | Update the brand's own profile (tri-state: only sent fields are written, each becomes owner-locked). Field availability depends on plan. |
 | `brand.orders.list_pending` | `brand:orders:manage` | List orders waiting for brand review. |
 | `brand.orders.get` | `brand:orders:manage` | Get one order's full detail. |
 | `brand.orders.accept` | `brand:orders:manage` | Accept a pending order. |
@@ -228,8 +224,7 @@ The backend rate-limits agent traffic per API key. Limits as of v0.1:
 
 | Endpoint | Limit |
 |---|---|
-| `PUT /agent/v1/brand/featured` | 10 / hour |
-| `POST /agent/v1/brand/deals` | 20 / day |
+| `PUT /agent/v1/brand/profile` | 20 / hour |
 | `POST /agent/v1/orders/draft` | 60 / hour |
 | `POST /oauth/register` | 20 / hour (per IP) |
 | `POST /oauth/token` | 60 / minute (per client) |
