@@ -325,7 +325,7 @@ products and do not invent a winner.
 Context tools declare `_meta.ui.resourceUri=ui://aeko-shop/context-card.html`.
 `resources/read` serves `text/html;profile=mcp-app` with an MCP Apps initialization
 handshake and host tool-result notifications, an expandable sentence view, and
-no external network/resource/frame origins in its CSP. Every result also includes
+no external network/frame origins in its CSP (only explicit image hosts). Every result also includes
 the complete JSON text fallback and matching structured content, so clients
 without MCP Apps support retain all facts, qualifications and citations.
 Merchant strings render as DOM text. Host-specific rendering support still
