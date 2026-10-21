@@ -40,7 +40,9 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "test": "npm run build && node --test tests/protocol.test.mjs",
+    "start:hosted": "node dist/cli.js hosted"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",
@@ -48,6 +50,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
+    "ajv": "^8.20.0",
     "typescript": "^5.7.0"
   }
 }

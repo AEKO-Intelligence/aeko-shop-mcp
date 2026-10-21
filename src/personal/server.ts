@@ -4,8 +4,11 @@ import { z } from "zod";
 import { AekoApiClient } from "../shared/api-client.js";
 import { asTextResult } from "../shared/tool-result.js";
 
+import { registerContextTools } from "../catalog/tools.js";
+
 const api = new AekoApiClient("personal");
 const server = new McpServer({ name: "AEKO Personal Shopper", version: "0.1.0" });
+registerContextTools(server, (path, init) => api.requestPublic(path, init));
 
 server.tool(
   "catalog.search",
