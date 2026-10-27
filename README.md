@@ -303,3 +303,76 @@ The current MCP release (v0.1) does **not** call this endpoint — no schema-ver
 ## License
 
 MIT — see [LICENSE](./LICENSE).
+
+### Hosted public MCP and Context Cards
+
+`npm run build && npm run start:hosted` starts the SDK Streamable HTTP endpoint
+at `http://127.0.0.1:8788/mcp`; `GET /healthz` is the container readiness probe. This is a stateless, anonymous **read-only** profile:
+`catalog.search`, `catalog.get_product`, `context.search`, `context.get`, and
+`catalog.compare`. Personal and brand stdio profiles and their OAuth storage are
+preserved; personal also gains the three context/comparison tools.
+
+Context reads require the backend's immutable approved public snapshot,
+explicit AEKO publication, current public product/brand visibility and live
+connection. A draft or private merchant-PDP-only card
+does not qualify. Lexical situation matches cite the approved item and canonical
+product URL; they do not infer suitability, safety or provider acceptance.
+Search scans 25 products per page and discloses `scan_complete`, `next_cursor`
+and `truncated_matches`. Follow cursors for wider coverage; this is not a global
+semantic recommendation ranking. Comparisons explicitly preserve unavailable
+products and do not invent a winner.
+
+Context tools declare `_meta.ui.resourceUri=ui://aeko-shop/context-card.html`.
+`resources/read` serves `text/html;profile=mcp-app` with an MCP Apps initialization
+handshake and host tool-result notifications, an expandable sentence view, and
+no external network/frame origins in its CSP (only explicit image hosts). Every result also includes
+the complete JSON text fallback and matching structured content, so clients
+without MCP Apps support retain all facts, qualifications and citations.
+Merchant strings render as DOM text. Host-specific rendering support still
+requires a real client acceptance check; local protocol tests do not establish
+ChatGPT app enrollment or a published MCP Registry entry.
+
+Deployment preparation (no deployment is performed by these commands):
+
+```sh
+npm ci
+npm test
+npm run typecheck
+docker build -f Dockerfile.hosted -t aeko-shop-public-mcp .
+# Configure container env before starting behind your HTTPS proxy:
+# AEKO_SHOP_API_BASE=https://api.aeko.shop
+# AEKO_MCP_ALLOWED_HOSTS=api.aeko.shop,aeko.shop
+# AEKO_MCP_ALLOWED_ORIGINS=https://your-authorized-browser-host.example
+# HOST=0.0.0.0 PORT=8788
+```
+
+Proxy `/mcp` to port 8788 with a Host included in `AEKO_MCP_ALLOWED_HOSTS` (the internal upstream hostname for a Next.js proxy, the public hostname for a Host-preserving edge proxy). Permit POST and MCP
+headers (`Accept`, `Content-Type`, `MCP-Protocol-Version`); GET/DELETE return 405
+because this stateless profile does not keep SSE sessions. Configure TLS,
+request deadlines and host/origin allowlists before exposing it.
+The hosted process also enforces a 120-request/minute budget per validated
+forwarded ingress hop and a 1,200-request/minute global budget, returning 429
+with `Retry-After`. These counters are process-local: keep the internal hosted
+app at one replica until a shared or edge limiter is installed. The Next.js
+proxy overwrites `X-AEKO-Client-Hop`; never expose the hosted app directly.
+No browser origins are permitted by default; ordinary desktop MCP clients omit
+Origin. Do not forward merchant credentials or local OAuth tokens to this service.
+The backend deployment must mount `app.routes.context_mcp.router` and run the
+approved public-context migrations. `server.json` continues to advertise only
+the released stdio package until a hosted URL is actually deployed and verified.
+
+`npm test` runs actual SDK HTTP and independent in-memory protocol clients plus
+an MCP App handshake/DOM test. `tests/backend-client.mjs BASE BRAND PRODUCT`
+probes a real backend approved fixture through the hosted HTTP transport; the
+backend `tests/test_context_mcp.py` creates this fixture in local test Postgres
+and invokes that probe. No production data is changed by these tests.
+
+For the Next.js proxy integration, run
+`node tests/next-proxy-client.mjs /absolute/path/to/aeko-shop-front`.
+It copies the exact Next route and proxy source into a temporary isolated Next
+app, performs SDK initialize/list/call/resource requests against the real hosted
+transport, and verifies that Authorization, Cookie and Origin are stripped.
+This test supplies an approved API fixture; the separate backend-client probe
+covers real FastAPI/Postgres approval and withdrawal behavior. Official UCP
+2026-04-08 schemas are pinned under `tests/fixtures/ucp_20260408`; the backend
+probe validates actual search, lookup and product responses with AJV 2020-12.
