@@ -1,18 +1,16 @@
 import { API_BASE, type Profile } from "./config.js";
-import { ApiError, AuthRequiredError } from "./errors.js";
-import { refreshAccessToken, requireAccessToken } from "./oauth.js";
+import { ApiError } from "./errors.js";
+import { requireAccessToken } from "./oauth.js";
 
 export class AekoApiClient {
   constructor(private readonly profile: Profile) {}
 
   async request<T>(path: string, init: RequestInit = {}): Promise<T> {
-    let token = await requireAccessToken(this.profile);
+    const token = await requireAccessToken(this.profile);
     let response = await this.fetchWithToken(path, token, init);
     if (response.status === 401) {
-      const refreshed = await refreshAccessToken(this.profile);
-      if (!refreshed) throw new AuthRequiredError("Run OAuth authorization again from the AEKO Shop install page.");
-      token = refreshed;
-      response = await this.fetchWithToken(path, token, init);
+      const refreshed = await requireAccessToken(this.profile, token);
+      response = await this.fetchWithToken(path, refreshed, init);
     }
     return this.parse<T>(response);
   }
