@@ -41,11 +41,12 @@
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "prepublishOnly": "npm run build",
-    "test": "npm run build && node --test tests/protocol.test.mjs",
+    "test": "npm run build && node --test tests/*.test.mjs",
     "start:hosted": "node dist/cli.js hosted"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",
+    "proper-lockfile": "4.1.2",
     "zod": "^3.24.0"
   },
   "devDependencies": {
